@@ -45,7 +45,6 @@ RUN npm install --prefix /home/node/.n8n \
     puppeteer-extra-plugin-user-preferences@2.4.1 \
     puppeteer-extra-plugin-user-data-dir@2.4.1 \
     puppeteer-extra-plugin-anonymize-ua@2.4.6 \
-    puppeteer-extra-plugin-block-resources@2.4.6 \
     puppeteer-extra-plugin-recaptcha@3.6.8 \
     user-agents@1.1.0
 
