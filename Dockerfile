@@ -27,21 +27,11 @@ RUN apk add --no-cache \
 WORKDIR /usr/src/app
 
 # Copy package.json if you have one, otherwise initialize npm
-RUN npm init -y
-
-# Install Puppeteer + extras locally (no -g)
-RUN npm install \
-    puppeteer@24 \
-    puppeteer-extra@3 \
-    puppeteer-extra-plugin-stealth@2 \
-    puppeteer-extra-plugin-user-preferences@2 \
-    puppeteer-extra-plugin-user-data-dir@2 \
-    puppeteer-extra-plugin-anonymize-ua@2 \
-    puppeteer-extra-plugin-recaptcha@3 \
-    user-agents@1
+COPY package.json package-lock.json* ./
+RUN npm install --unsafe-perm=true --no-audit --production
 
 # Copy server.js into container
-COPY ./server.js .
+COPY server.js .
 
 # Set environment variables for Chromium
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
@@ -51,6 +41,9 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
 
 # Expose the port for API
 EXPOSE 3000
+
+# Make node user own the app directory (avoid permission errors)
+RUN chown -R node:node /usr/src/app
 
 # Switch to non-root user for running server
 USER node
