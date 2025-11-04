@@ -1,10 +1,11 @@
-# Base image
+# Puppeteer API Dockerfile
+
 FROM node:20-alpine
 
-# Switch to root to install dependencies
+# Switch to root for package installation
 USER root
 
-# Install Chromium and dependencies
+# Install dependencies for Chromium and Puppeteer
 RUN apk add --no-cache \
     chromium \
     chromium-chromedriver \
@@ -22,21 +23,14 @@ RUN apk add --no-cache \
     make \
     g++
 
-# Set Puppeteer environment variables
-ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
-    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
-    CHROME_BIN=/usr/bin/chromium-browser \
-    CHROME_PATH=/usr/lib/chromium/ \
-    PORT=3000
-
-# Create working directory
+# Create app directory
 WORKDIR /usr/src/app
 
-# Switch to node user
-USER node
+# Copy package.json if you have one, otherwise initialize npm
+RUN npm init -y
 
-# Install Puppeteer + extras globally in container
-RUN npm install -g \
+# Install Puppeteer + extras locally (no -g)
+RUN npm install \
     puppeteer@24 \
     puppeteer-extra@3 \
     puppeteer-extra-plugin-stealth@2 \
@@ -46,12 +40,20 @@ RUN npm install -g \
     puppeteer-extra-plugin-recaptcha@3 \
     user-agents@1
 
-# Copy API server script
+# Copy server.js into container
 COPY ./server.js .
 
-# Expose API port
+# Set environment variables for Chromium
+ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
+    PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
+    CHROME_BIN=/usr/bin/chromium-browser \
+    CHROME_PATH=/usr/lib/chromium/
+
+# Expose the port for API
 EXPOSE 3000
 
-# Run API server
-CMD ["node", "server.js"]
+# Switch to non-root user for running server
+USER node
 
+# Start the Puppeteer server
+CMD ["node", "server.js"]
