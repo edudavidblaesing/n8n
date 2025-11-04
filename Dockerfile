@@ -52,7 +52,7 @@ EXPOSE 3000
 RUN chown -R node:node /usr/src/app
 
 # Switch to non-root user
-USER node
+USER root
 
 # Start the Puppeteer server
 CMD ["node", "server.js"]
