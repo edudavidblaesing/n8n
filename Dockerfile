@@ -1,7 +1,7 @@
-# Start from n8n official image
-FROM n8nio/n8n:latest
+# Base image
+FROM node:20-alpine
 
-# Switch to root to install system dependencies
+# Switch to root to install dependencies
 USER root
 
 # Install Chromium and dependencies
@@ -15,40 +15,42 @@ RUN apk add --no-cache \
     ca-certificates \
     ttf-freefont \
     ttf-opensans \
-    nodejs \
-    npm \
-    udev \
+    bash \
+    curl \
     git \
     python3 \
     make \
-    g++ \
-    bash \
-    curl
+    g++
 
-# Puppeteer environment variables
+# Set Puppeteer environment variables
 ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser \
     CHROME_BIN=/usr/bin/chromium-browser \
-    CHROME_PATH=/usr/lib/chromium/
+    CHROME_PATH=/usr/lib/chromium/ \
+    PORT=3000
 
-# Install Puppeteer + plugins globally
-RUN npm install -g \
-    puppeteer@21.6.1 \
-    puppeteer-extra@3.3.6 \
-    puppeteer-extra-plugin-stealth@2.11.2 \
-    puppeteer-extra-plugin-user-preferences@2.4.1 \
-    puppeteer-extra-plugin-user-data-dir@2.4.1 \
-    puppeteer-extra-plugin-anonymize-ua@2.4.6 \
-    puppeteer-extra-plugin-recaptcha@3.6.8 \
-    user-agents@1.1.0
+# Create working directory
+WORKDIR /usr/src/app
 
-# Switch back to node user
+# Switch to node user
 USER node
 
-# Set working directory
-WORKDIR /home/node
+# Install Puppeteer + extras globally in container
+RUN npm install -g \
+    puppeteer@24 \
+    puppeteer-extra@3 \
+    puppeteer-extra-plugin-stealth@2 \
+    puppeteer-extra-plugin-user-preferences@2 \
+    puppeteer-extra-plugin-user-data-dir@2 \
+    puppeteer-extra-plugin-anonymize-ua@2 \
+    puppeteer-extra-plugin-recaptcha@3 \
+    user-agents@1
 
-# Expose n8n port
-EXPOSE 5678
+# Copy API server script
+COPY ./server.js .
 
-# Entrypoint remains n8n
+# Expose API port
+EXPOSE 3000
+
+# Run API server
+CMD ["node", "server.js"]
