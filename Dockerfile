@@ -1,5 +1,4 @@
 # Puppeteer API Dockerfile
-
 FROM node:20-alpine
 
 # Switch to root for package installation
@@ -26,9 +25,16 @@ RUN apk add --no-cache \
 # Create app directory
 WORKDIR /usr/src/app
 
-# Copy package.json if you have one, otherwise initialize npm
-COPY package.json package-lock.json* ./
-RUN npm install --unsafe-perm=true --no-audit --production
+# Install Puppeteer + plugins locally (no package.json needed)
+RUN npm install --no-audit --production \
+    puppeteer@24 \
+    puppeteer-extra@3 \
+    puppeteer-extra-plugin-stealth@2 \
+    puppeteer-extra-plugin-user-preferences@2 \
+    puppeteer-extra-plugin-user-data-dir@2 \
+    puppeteer-extra-plugin-anonymize-ua@2 \
+    puppeteer-extra-plugin-recaptcha@3 \
+    user-agents@1
 
 # Copy server.js into container
 COPY server.js .
@@ -39,13 +45,13 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     CHROME_BIN=/usr/bin/chromium-browser \
     CHROME_PATH=/usr/lib/chromium/
 
-# Expose the port for API
+# Expose the API port
 EXPOSE 3000
 
-# Make node user own the app directory (avoid permission errors)
+# Give non-root user access to the app folder
 RUN chown -R node:node /usr/src/app
 
-# Switch to non-root user for running server
+# Switch to non-root user
 USER node
 
 # Start the Puppeteer server
