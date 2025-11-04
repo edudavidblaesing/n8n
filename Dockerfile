@@ -31,14 +31,8 @@ ENV PUPPETEER_SKIP_CHROMIUM_DOWNLOAD=true \
     CHROME_BIN=/usr/bin/chromium-browser \
     CHROME_PATH=/usr/lib/chromium/
 
-# Switch to node user for npm installs
-USER node
-
-# Ensure n8n home directory exists
-RUN mkdir -p /home/node/.n8n
-
-# Install Puppeteer + plugins directly into n8n folder
-RUN npm install --prefix /home/node/.n8n \
+# Install Puppeteer + plugins globally
+RUN npm install -g \
     puppeteer@21.6.1 \
     puppeteer-extra@3.3.6 \
     puppeteer-extra-plugin-stealth@2.11.2 \
@@ -48,10 +42,13 @@ RUN npm install --prefix /home/node/.n8n \
     puppeteer-extra-plugin-recaptcha@3.6.8 \
     user-agents@1.1.0
 
-# Set working directory back to n8n home
+# Switch back to node user
+USER node
+
+# Set working directory
 WORKDIR /home/node
 
 # Expose n8n port
 EXPOSE 5678
 
-# Default entrypoint remains n8n
+# Entrypoint remains n8n
