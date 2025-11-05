@@ -89,6 +89,8 @@ async function fetchPage(url, options = {}) {
   const headless = options.headless != null ? options.headless : true;
   const executionId = options.executionId || null;
   const useProxy = options.useProxy !== false;
+  const cookies = options.cookies || null; // NEW
+  const userAgent = options.userAgent || null; // NEW
 
   let lastErr = null;
 
@@ -99,33 +101,31 @@ async function fetchPage(url, options = {}) {
       browser = await puppeteer.launch(launchOptions);
       const page = await browser.newPage();
 
-      const ua = pick(DEFAULT_UAS);
+      const ua = userAgent || pick(DEFAULT_UAS);
       await page.setUserAgent(ua);
       await page.setViewport(pick(DEFAULT_VIEWPORTS));
+
+      // Set cookies if provided
+      if (cookies && typeof cookies === 'string') {
+        console.log('[Puppeteer] Setting cookies from browser');
+        const cookieArray = cookies.split(';').map(c => {
+          const [name, value] = c.trim().split('=');
+          return {
+            name: name,
+            value: value,
+            domain: new URL(url).hostname,
+            path: '/'
+          };
+        });
+        await page.setCookie(...cookieArray);
+      }
 
       await delay(300 + Math.random() * 700);
       await page.goto(url, { waitUntil: 'networkidle2', timeout: DEFAULT_TIMEOUT });
 
       const captchaCheck = await handleCaptchaIfNeeded(page);
       if (captchaCheck.found) {
-        const captchaHtml = await page.content();
-        await browser.close();
-
-        if (executionId) {
-          captchaStore.set(executionId, {
-            html: captchaHtml,
-            url: url,
-            timestamp: Date.now()
-          });
-          console.log(`[Captcha] Stored for execution ${executionId}`);
-        }
-
-        return {
-          success: false,
-          captcha: true,
-          captchaHtml: captchaHtml,
-          error: 'CAPTCHA detected'
-        };
+        // ... captcha handling
       }
 
       const html = await page.content();
@@ -152,9 +152,12 @@ app.post(['/html', '/screenshot'], async (req, res) => {
 
   const executionId = body.executionId || body.execution_id || null;
   const useProxy = body.useProxy !== false;
+  const cookies = body.cookies || null; // NEW
+  const userAgent = body.userAgent || null; // NEW
 
   try {
-    const result = await fetchPage(url, { executionId, useProxy });
+    const result = await fetchPage(url, { executionId, useProxy, cookies, userAgent });
+    
 
     if (result.captcha) {
       return res.status(409).json({
