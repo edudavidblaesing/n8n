@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Submit HTML - RA Scraper</title>
+    <style>
+        body { font-family: Arial; max-width: 800px; margin: 50px auto; padding: 20px; }
+        textarea { width: 100%; min-height: 400px; font-family: monospace; }
+        button { background: #4CAF50; color: white; padding: 15px 30px; border: none; border-radius: 5px; cursor: pointer; font-size: 16px; margin-top: 10px; }
+        .info { background: #e7f3ff; padding: 15px; margin: 20px 0; border-left: 4px solid #2196F3; }
+    </style>
+</head>
+<body>
+    <h1>🚨 Captcha Solver</h1>
+    
+    <div class="info">
+        <h3>Instructions:</h3>
+        <ol>
+            <li>Open the RA event URL and solve the captcha</li>
+            <li>View page source (Ctrl+U or Cmd+Option+U)</li>
+            <li>Copy ALL the HTML</li>
+            <li>Paste below and click Submit</li>
+        </ol>
+    </div>
+    
+    <input type="text" id="resumeUrl" placeholder="Paste n8n resume URL here" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+    <textarea id="html" placeholder="Paste full HTML source here..."></textarea>
+    <button onclick="submit()">Submit HTML</button>
+    <div id="status" style="margin-top: 20px;"></div>
+    
+    <script>
+        async function submit() {
+            const url = document.getElementById('resumeUrl').value;
+            const html = document.getElementById('html').value;
+            const status = document.getElementById('status');
+            
+            if (!url || !html) {
+                status.innerHTML = '<p style="color:red;">Please fill both fields!</p>';
+                return;
+            }
+            
+            status.innerHTML = '<p style="color:blue;">Submitting...</p>';
+            
+            try {
+                const response = await fetch(url, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ html_source: html })
+                });
+                
+                if (response.ok) {
+                    status.innerHTML = '<p style="color:green;">✅ Success! Workflow resumed.</p>';
+                } else {
+                    status.innerHTML = '<p style="color:red;">❌ Error: ' + response.status + '</p>';
+                }
+            } catch (error) {
+                status.innerHTML = '<p style="color:red;">❌ ' + error.message + '</p>';
+            }
+        }
+    </script>
+</body>
+</html>
